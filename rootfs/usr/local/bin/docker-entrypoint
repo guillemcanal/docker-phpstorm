@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -e -o pipefail
+
+# Allow default user nme, UID and GID ajustements.
+main() {
+    local USER_NAME="${USER_NAME:-"user"}"
+    local USER_UID="${USER_UID:-"1000"}"
+    local USER_GID="${USER_GID:-"1000"}"
+
+    if [ "$USER_NAME" != "user" ];then
+        local NEW_HOME="/home/${USER_NAME}" 
+        usermod -l "${USER_NAME}" user &> /dev/null
+        usermod -d "${NEW_HOME}" "${USER_NAME}" &> /dev/null
+        export HOME="${NEW_HOME}"
+    fi
+
+    if [ "$USER_UID" != "1000" ];then
+        usermod -u "${USER_UID}" "${USER_NAME}" &> /dev/null
+    fi
+    
+    if [ "$USER_GID" != "1000" ];then
+        groupmod -g "${USER_GID}" "${USER_NAME}" &> /dev/null
+    fi
+
+    local DOCKER_SOCKET="/var/run/docker.sock"
+    if [ -S "$DOCKER_SOCKET" ];then
+        local DOCKER_SOCK_GID="$(stat -c '%g' $DOCKER_SOCKET)"
+        echo "[INFO] docker socket group $DOCKER_SOCK_GID"
+        if [ "$DOCKER_SOCK_UID" != "999" ];then
+            groupmod -g $DOCKER_SOCK_GID docker
+        fi
+    else
+        echo "[WARN] No docker socket detected"
+    fi
+
+    gosu "${USER_NAME}" "$@"
+}
+
+main "$@"

@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+main() {
+    local SIZE="${1:-"small"}"
+    case "$SIZE" in
+        hd|large|hidpi)
+            echo -e "Xft.dpi: 150\nXcursor.size: 32\n" | xrdb -merge -
+            ;;
+        ld|medium)
+            echo -e "Xft.dpi: 110\nXcursor.size: 16\n" | xrdb -merge -
+            ;;
+        sd|small)
+            echo -e "Xft.dpi: 96\nXcursor.size: 16\n" | xrdb -merge -
+            ;;
+    esac
+    
+    docker restart $(hostname)
+}
+
+main "$@"
